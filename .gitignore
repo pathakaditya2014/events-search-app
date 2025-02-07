@@ -1,0 +1,3 @@
+.venv-cmd/
+.venv-bash/
+__pycache__/
