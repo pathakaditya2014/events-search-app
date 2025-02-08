@@ -6,8 +6,8 @@ const router = VueRouter.createRouter({
             path: "/",
             component: {
                 template: `
-                    <div class="h-75 d-flex">
-                        <div class="m-auto text-center">
+                    <div class="container-fluid">
+                        <div class="m-auto p-4 pt-5 text-center">
                             <h1 class="mb-5 text-decoration-underline">E<small>VENTS</small> S<small>EARCH</small></h1>
                             <h3>Find any event in any city</h3>
                             <p class="mb-5"><strong>Search Query Format:</strong> <em>&lt;city&gt;</em><strong>, </strong><em>&lt;country&gt;</em></p>
@@ -282,7 +282,7 @@ Vue.createApp({
     template: `
         <div class="container-fluid p-0 h-100 overflow-auto">
 
-            <div class="bg-body container-fluid px-5 py-3 sticky-top z-2 border-bottom border-tertiary border-2 shadow">
+            <header class="bg-body container-fluid px-5 py-3 sticky-top z-2 border-bottom border-tertiary border-2 shadow">
                 <form class="mx-auto text-center col-12 col-sm-6" @submit.prevent="submit">
                     <div class="input-group mb-2">
                         <input v-model="city_query" list="cities" placeholder="Enter any City" class="form-control flex-fill border-secondary shadow-none" required>
@@ -293,9 +293,14 @@ Vue.createApp({
                         <option v-for="city in cities" :value="city"/>
                     </datalist>
                 </form>
-            </div>
+            </header>
 
             <router-view></router-view>
+
+            <footer class="py-4 bg-body border-top border-tertiary border-2">
+                <div class="text-center text-body-secondary">© 2025 Events Search App, Aditya Pathak</div>
+            </footer>
+
         </div>
     `,
     data() {
