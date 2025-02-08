@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, render_template, request
 import requests as rq
-from yarl import URL # type: ignore
+from yarl import URL
 from .scraper import scrape_events
+
+
 
 app = Flask(__name__)
 
@@ -82,7 +84,7 @@ def get_tickets():
     if rq.get(event_url, headers=headers).status_code != 200:
         return jsonify(error="Invalid Event Tag"), 400
     
-    ###
+    ### Logic for handling email here; for now, just printing
     print(email)
 
     return jsonify(success="Got Email", next=event_url), 200
@@ -113,5 +115,3 @@ def test():
 
     return jsonify(cities=cities), 200
 
-if __name__ == '__main__':
-    app.run(debug=True)

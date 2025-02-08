@@ -1,7 +1,7 @@
 import requests
 from flask import jsonify
-from pyquery import PyQuery as pq # type: ignore
-from yarl import URL # type: ignore
+from pyquery import PyQuery as pq
+from yarl import URL
 
 def scrape_events(city, country, params={}):
     city = city.lower().replace(" ","-").strip()
