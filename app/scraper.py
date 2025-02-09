@@ -17,7 +17,7 @@ def scrape_events(city, country, params={}):
         doc = pq(response.text)
         
         data = {
-            'city_text': f'{city.title().replace("-", " ")}, {country.title().replace("-", " ")}',
+            'city_text': f'{city}, {country}'.title().replace("-", " "),
             'page': int(params['page']),
             'end': False,
             'events': [],
@@ -62,7 +62,7 @@ def scrape_events(city, country, params={}):
         
         data['page'] = cur_page
 
-        res_heading = doc(".search-header__result-header h2").text().split("vents in")[-1].strip() # vents in, because Events in or events in is possible
+        res_heading = doc(".search-header__result-header h1").text().split("vents in")[-1].strip() # vents in, because Events in or events in is possible
         if len(res_heading) != 0:
             data['city_text'] = res_heading
 
