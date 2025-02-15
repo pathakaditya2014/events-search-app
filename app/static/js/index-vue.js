@@ -65,7 +65,7 @@ const router = VueRouter.createRouter({
                         <div class="modal fade" tabindex="-1" ref="modal">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <form @submit.prevent="get_tickets">
+                                    <form @submit.prevent="submit_form">
                                         <div class="modal-header border-bottom border-secondary bg-secondary-subtle">
                                             <h1 class="modal-title fs-5">Enter Email to Get Tickets</h1>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -76,19 +76,35 @@ const router = VueRouter.createRouter({
 
                                                 <h5 class="mb-3"><strong>{{modal.event.name}}</strong></h5>
                                                 
-                                                <div class=""><strong>Date:</strong> {{ modal.event.date }}</div>
-                                                <div class="mb-4"><strong>Location:</strong> {{ modal.event.location }}</div>
+                                                <div><strong>Date:</strong> {{ modal.event.date }}</div>
+                                                <div><strong>Location:</strong> {{ modal.event.location }}</div>
+                                                <hr class="mt-1 mb-4">
 
-                                                <div class="form-floating">
-                                                    <input type="email" v-model="modal.email" id="email" class="form-control border-secondary" placeholder="Enter your email" required>
-                                                    <label for="email">Enter your email</label>
-                                                </div>
+                                                <template v-if="!modal.verified">
+                                                    <template v-if="!modal.otp_sent">
+                                                        <div class="form-floating">
+                                                            <input type="email" v-model="modal.email" id="email" class="form-control border-secondary" placeholder="Enter your email" required>
+                                                            <label for="email">Enter your email</label>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div><strong>OTP sent to <span role="button" class="link-primary fw-normal text-decoration-underline" title="Edit Email" @click="edit_email">{{modal.email}}</span></strong></div>
+                                                        <div class="mb-1"><small><em>Expires in 5 mins.</em><small></div>
+                                                        <div class="form-floating">
+                                                            <input type="number" v-model="modal.otp" min="100000" max="999999" id="otp" class="form-control border-secondary" placeholder="Enter 6-digit OTP" required>
+                                                            <label for="otp">Enter 6-digit OTP</label>
+                                                        </div>
+                                                    </template>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="text-success"><strong><span role="button" class="link-primary fw-normal text-decoration-underline" title="Edit Email" @click="edit_email">{{modal.email}}</span> is Verified! <i class="bi bi-check-circle"></i></strong></div>
+                                                </template>
                                             </div>
                                         </div>
                                         <div class="modal-footer border-top border-secondary bg-secondary-subtle justify-content-center">
                                             <button type="submit" class="btn btn-success" :disabled="modal.form_submit">
                                                 <span v-if="modal.form_submit" class="spinner-border spinner-border-sm me-2"></span>
-                                                <span role="status">Get Tickets</span>
+                                                <span role="status">{{modal.submit_btn_text}}</span>
                                             </button>
                                             <button type="button" class="btn btn-secondary" @click="hide_modal">Close</button>
                                         </div>
@@ -110,6 +126,10 @@ const router = VueRouter.createRouter({
                             event: {},
                             email: "",
                             form_submit: false,
+                            otp_sent: false,
+                            verified: false,
+                            otp: "",
+                            submit_btn_text: "Verify Email",
                         }
                     }
                 },
@@ -178,9 +198,20 @@ const router = VueRouter.createRouter({
                         const modal = bootstrap.Modal.getInstance(this.$refs.modal) || new bootstrap.Modal(this.$refs.modal);
                         modal.hide();
                     },
-                    get_tickets() {
+                    edit_email() {
+                        this.modal.verified = false;
+                        this.modal.submit_btn_text = "Verify Email";
+                        this.modal.otp_sent = false;
+                        this.modal.otp = "";
+                    },
+                    send_otp() {
                         if (this.modal.form_submit) return;
                         if (Object.keys(this.modal.event).length === 0) return;
+                        if (this.modal.verified) return;
+                        if (this.modal.otp_sent) {
+                            this.verify_otp();
+                            return;
+                        }
 
                         this.modal.form_submit = true;
 
@@ -191,6 +222,96 @@ const router = VueRouter.createRouter({
                             return;
                         }
 
+                        const form_data = new FormData();
+                        form_data.append('email', email);
+
+                        fetch("/send_otp", {
+                            method: "POST",
+                            body: form_data,
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                this.modal.form_submit = false;
+                                alert(data.error);
+                            }
+                            else if (data.success) {
+                                this.modal.otp_sent = true;
+                                this.modal.submit_btn_text = "Verify OTP";
+                                this.modal.form_submit = false;
+                            }
+                        })
+                        .catch(error => {
+                            alert("Caught Error");
+                            console.error(error);
+                            
+                            this.modal.form_submit = false;
+                        });
+                    },
+                    verify_otp() {
+                        if (this.modal.form_submit) return;
+                        if (Object.keys(this.modal.event).length === 0) return;
+                        if (this.modal.verified) return;
+                        if (!this.modal.otp_sent) {
+                            alert("Send OTP first");
+                            return;
+                        }
+
+                        this.modal.form_submit = true;
+
+                        let email = this.modal.email;
+                        if (!email) {
+                            this.modal.form_submit = false;
+                            alert("Email is required");
+                            return;
+                        }
+
+                        let otp = this.modal.otp;
+                        if (!otp) {
+                            this.modal.form_submit = false;
+                            alert("OTP is required");
+                            return;
+                        }
+
+                        const form_data = new FormData();
+                        form_data.append('email', email);
+                        form_data.append('otp', otp);
+
+                        fetch("/verify_otp", {
+                            method: "POST",
+                            body: form_data,
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.error) {
+                                this.modal.form_submit = false;
+                                alert(data.error);
+                            }
+                            else if (data.success) {
+                                this.modal.verified = true;
+                                this.modal.submit_btn_text = "Get Tickets";
+                                this.modal.form_submit = false;
+                            }
+                        })
+                        .catch(error => {
+                            alert("Caught Error");
+                            console.error(error);
+                            
+                            this.modal.form_submit = false;
+                        });
+
+                    },
+                    submit_form() {
+                        if (this.modal.form_submit) return;
+                        if (Object.keys(this.modal.event).length === 0) return;
+                        if (!this.modal.verified) {
+                            this.send_otp();
+                            return;
+                        }
+                        
+                        this.modal.form_submit = true;
+
+                        let email = this.modal.email;
                         let tag = this.modal.event.tag;
 
                         const form_data = new FormData();
@@ -220,6 +341,8 @@ const router = VueRouter.createRouter({
                         .catch(error => {
                             alert("Caught Error");
                             console.error(error);
+                            
+                            this.modal.form_submit = false;
                         });
                     }
                 },
@@ -268,6 +391,10 @@ const router = VueRouter.createRouter({
                             this.modal.event = {};
                             this.modal.email = "";
                             this.modal.form_submit = false;
+                            this.modal.otp_sent = false;
+                            this.modal.verified = false;
+                            this.modal.otp = "";
+                            this.modal.submit_btn_text = "Verify Email";
                         });
                     }
                 },

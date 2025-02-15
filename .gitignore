@@ -2,3 +2,4 @@
 .venv-cmd/
 .venv-bash/
 __pycache__/
+.env

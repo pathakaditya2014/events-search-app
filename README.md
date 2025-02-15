@@ -8,7 +8,8 @@
     1. Open Terminal/WSL bash.
     2. Navigate to root folder of the application.
     3. Execute bash_init.sh script to intialize the Python Virtual Environment and install required modules.
-    4. Wait for bash_init.sh to finish executing, then execute bash_start_server.sh to start the gunicorn web server.
-    5. Open your web browser and navigate to localhost:8000 to view the web app.
+    4. Enter values of REDIS_URL, MAIL_USERNAME, MAIL_PASSWORD, MAIL_DEFAULT_SENDER in .env file in application root.
+    5. Execute bash_start_server.sh to start the gunicorn web server.
+    6. Open your web browser and navigate to localhost:8000 to view the web app.
 
 ### Live Version - [Events Search App](https://events-search-app.onrender.com)
